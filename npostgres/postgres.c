@@ -191,7 +191,7 @@ static value np_result_next( value o )
 				v = alloc_string(PQgetvalue(r->r,r->current,i));
 				break;
 			case CONV_BOOL:
-				v = alloc_bool( *PQgetvalue(r->r,r->current,i) != '0' );
+				v = alloc_bool( *PQgetvalue(r->r,r->current,i) != 'f' );
 				break;
 			case CONV_FLOAT:
 				v = alloc_float(atof(PQgetvalue(r->r,r->current,i)));
@@ -463,11 +463,12 @@ static value np_request( value m, value r )
 	val_check( r, string );
 
 	result = PQexec( PGCONN( m ), val_string( r ) );
-	if (PQresultStatus(result) != PGRES_COMMAND_OK && PQresultStatus(result) != PGRES_TUPLES_OK)
-    {
-        printf( "Query failed: %s", PQerrorMessage( m ) );
-        PQclear(result);
-    }
+	if (PQresultStatus(result) != PGRES_COMMAND_OK &&
+	    PQresultStatus(result) != PGRES_TUPLES_OK)
+	  {
+	    printf( "Query failed: %s", PQerrorMessage( PGCONN(m) ) );
+//            PQclear(result);
+	  }
 
 	return alloc_result( result );
 }
@@ -533,6 +534,16 @@ static value np_result_get_column_number( value m, value c )
 	return alloc_string( PQfnumber( result->r, val_string( c ) ) );
 }
 
+static value np_result_get_error( value m )
+{
+	result *result;
+
+	val_check_kind( m, k_result );
+
+	result = PGRESULT( m );
+
+	return alloc_string( PQresultErrorMessage( result->r ) );
+}
 
 
 DEFINE_PRIM(np_connect,1);
@@ -551,3 +562,4 @@ DEFINE_PRIM(np_result_get,2);
 DEFINE_PRIM(np_result_get_int,2);
 DEFINE_PRIM(np_result_get_float,2);
 DEFINE_PRIM(np_result_set_conv_date,2);
+DEFINE_PRIM(np_result_get_error,1);
