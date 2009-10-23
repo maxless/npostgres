@@ -23,13 +23,14 @@
  * DAMAGE.
  * 
  * Written by Lee McColl Sylvester
+ * Modifications by Max S
  *
  */
 package neko.db;
 
 import neko.db.Connection;
 
-private class PostgresResultSet implements ResultSet {
+class PostgresResultSet implements ResultSet {
 
 	public var length(getLength,null) : Int;
 	public var nfields(getNFields,null) : Int;
@@ -100,6 +101,11 @@ private class PostgresResultSet implements ResultSet {
 		return result_last_id( r );
 	}
 
+	// get error message of this result, returns empty string on ok
+	public function getErrorMessage() {
+		return new String( result_get_error( r ) );
+	}
+
 	static var result_next = neko.Lib.load("npostgres","np_result_next",1);
 	static var result_get_length = neko.Lib.load("npostgres","np_result_get_length",1);
 	static var result_get_nfields = neko.Lib.load("npostgres","np_result_get_nfields",1);
@@ -107,6 +113,7 @@ private class PostgresResultSet implements ResultSet {
 	static var result_get_int = neko.Lib.load("npostgres","np_result_get_int",2);
 	static var result_get_float = neko.Lib.load("npostgres","np_result_get_float",2);
 	static var result_last_id = neko.Lib.load("npostgres","np_last_insert_id",1);
+	static var result_get_error = neko.Lib.load("npostgres","np_result_get_error",1);
 
 }
 
@@ -121,6 +128,7 @@ private class PostgresConnection implements Connection {
 
 	public function request( qry : String ) : ResultSet {
 		var r = _request( __c, untyped qry.__s );
+	
 		var rs : ResultSet = new PostgresResultSet( r );
 		id = cast( rs, PostgresResultSet ).lastInsertId();
 		return rs;
@@ -135,7 +143,7 @@ private class PostgresConnection implements Connection {
 	}
 
 	public function quote( s : String ) {
-		return "'"+escape( s )+"'";
+		return "E'"+escape( s )+"'";
 	}
 
 	public function lastInsertId() {
@@ -157,15 +165,15 @@ private class PostgresConnection implements Connection {
 	public function rollback() {
 		request("ROLLBACK");
 	}
-
+/*
 	public function hasFeature( f ) {
 		switch( f ) 
 		{
-			case ForUpdate: return false;
+			case "ForUpdate": return false;
 		}
 		return false;
 	}
-
+*/
 	static var _connect = neko.Lib.load("npostgres","np_connect",1);
 	static var _close = neko.Lib.load("npostgres","np_free_connection",1);
 	static var _request = neko.Lib.load("npostgres","np_request",2);
