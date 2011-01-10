@@ -146,6 +146,20 @@ private class PostgresConnection implements Connection {
 		return "E'"+escape( s )+"'";
 	}
 
+
+	public function addValue( s : StringBuf, v : Dynamic ) {
+		var t = untyped __dollar__typeof(v);
+		if( untyped (t == __dollar__tint || t == __dollar__tnull) )
+			s.add(v);
+		else if( untyped t == __dollar__tbool )
+			s.add(if( v ) "'t'" else "'f'");
+		else {
+			s.add("E'");
+			s.add(escape(Std.string(v)));
+			s.addChar("'".code);
+		}
+	}
+
 	public function lastInsertId() {
 		return id;
 	}

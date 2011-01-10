@@ -5,7 +5,7 @@ PGSQLDIR = /usr/local/pgsql/include
 CC = gcc
 
 CFLAGS = -w -fPIC -I $(PGSQLDIR) -I $(NEKODIR)
-LDFLAGS = -shared -Wl,-soname,npostgres.ndll -lc
+LDFLAGS = -shared -Wl,-soname,npostgres.ndll -lc -lpq
 
 npostgres.ndll: postgres.o
 	$(CC) $(LDFLAGS) -o npostgres.ndll postgres.o
@@ -14,7 +14,6 @@ postgres.o: postgres.c
 	$(CC) $(CFLAGS) -c postgres.c -o postgres.o 
 
 all: npostgres.ndll
-	cp npostgres.ndll ~/hserver-dogs/edit/
 
 clean:
 	rm postgres.o npostgres.ndll
