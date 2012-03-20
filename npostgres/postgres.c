@@ -466,8 +466,19 @@ static value np_request( value m, value r )
 	if (PQresultStatus(result) != PGRES_COMMAND_OK &&
 	    PQresultStatus(result) != PGRES_TUPLES_OK)
 	  {
-	    printf( "Query failed: %s", PQerrorMessage( PGCONN(m) ) );
+	    printf( "Query failed: [%s] (Result status:%i)", PQerrorMessage( PGCONN(m) ),
+	      PQresultStatus(result) );
 //            PQclear(result);
+
+	    // connection failed, trying to restore it
+	    if (PQresultStatus(result) == PGRES_FATAL_ERROR)
+	      {
+	        PQreset( PGCONN( m ) );
+
+	        // trying to resend query
+	        PQclear(result);
+	        result = PQexec( PGCONN( m ), val_string( r ) );
+	      }
 	  }
 
 	return alloc_result( result );
