@@ -1,6 +1,6 @@
 # change these to where your libpq and neko include dirs are
 NEKODIR = /usr/lib/neko/include
-PGSQLDIR = /usr/local/pgsql/include
+PGSQLDIR = /usr/include/postgresql
 
 CC = gcc
 
