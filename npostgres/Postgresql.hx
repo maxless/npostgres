@@ -41,6 +41,12 @@ class PostgresResultSet implements ResultSet {
 		this.r = r;
 	}
 
+    
+    public function getFieldsNames() : Null<Array<String>> {
+      trace('TODO: not implemented!');
+      return null;
+    }
+
 	function getLength() {
 		return result_get_length( r );
 	}
