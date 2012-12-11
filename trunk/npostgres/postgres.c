@@ -428,27 +428,39 @@ static value alloc_result( PGresult *r )
 	res->conv_date = NULL;
 	res->current = NULL;
 	res->nfields = num_fields;
-	res->nrows = num_rows;
-	res->fields_ids = (field*)alloc_private(sizeof(field)*num_fields);
-	res->fields_convs = (CONV*)alloc_private(sizeof(CONV)*num_fields);
-	for( i=0; i<num_fields; i++ )
+	
+	// UPDATE, INSERT, DELETE queries don't have any fields, skip this
+	// because libgc 1.0.3 crashes after alloc_private(0) is called enough times
+	if (num_fields > 0)
 	{
-		field id = val_id( PQfname( r, i ) );
-		for( j=0; j<i; j++ )
-			if( res->fields_ids[j] == id ) {
-				buffer b = alloc_buffer("Error, same field ids for : ");
-				buffer_append( b, PQfname( r, i ) );
-				buffer_append( b, ":" );
-				val_buffer( b, alloc_int( i ) );
-				buffer_append( b, " and " );
-				buffer_append( b, PQfname( r, i ) );
-				buffer_append( b, ":" );
-				val_buffer( b, alloc_int( j ) );
-				buffer_append( b, "." );
-				bfailure( b );
-			}
-		res->fields_ids[i] = id;
-		res->fields_convs[i] = convert_type( (PGTYPE)PQftype( r, i ) , PQfsize( r, i ) );
+		res->nrows = num_rows;
+		res->fields_ids = (field*)alloc_private(sizeof(field)*num_fields);
+		res->fields_convs = (CONV*)alloc_private(sizeof(CONV)*num_fields);
+		for( i=0; i<num_fields; i++ )
+		{
+			field id = val_id( PQfname( r, i ) );
+			for( j=0; j<i; j++ )
+				if( res->fields_ids[j] == id ) {
+					buffer b = alloc_buffer("Error, same field ids for : ");
+					buffer_append( b, PQfname( r, i ) );
+					buffer_append( b, ":" );
+					val_buffer( b, alloc_int( i ) );
+					buffer_append( b, " and " );
+					buffer_append( b, PQfname( r, i ) );
+					buffer_append( b, ":" );
+					val_buffer( b, alloc_int( j ) );
+					buffer_append( b, "." );
+					bfailure( b );
+				}
+			res->fields_ids[i] = id;
+			res->fields_convs[i] = convert_type( (PGTYPE)PQftype( r, i ) , PQfsize( r, i ) );
+		}
+	}
+	else
+	{
+		res->nrows = (int)atoi(PQcmdTuples(r));
+		res->fields_ids = NULL;
+		res->fields_convs = NULL;
 	}
 	val_gc( o, np_free_result );
 	return o;
