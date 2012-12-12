@@ -42,10 +42,16 @@ class PostgresResultSet implements ResultSet {
 	}
 
     
-    public function getFieldsNames() : Null<Array<String>> {
-      trace('TODO: not implemented!');
-      return null;
-    }
+	public function getFieldsNames() : Null<Array<String>> {
+		if (nfields == 0)
+			return null;
+
+		var list = [];
+		for (i in 0...nfields)
+			list.push('' + result_get_column_name(r, i));
+
+		return list;
+	}
 
 	function getLength() {
 		return result_get_length( r );
@@ -120,6 +126,7 @@ class PostgresResultSet implements ResultSet {
 	static var result_get_float = neko.Lib.load("npostgres","np_result_get_float",2);
 	static var result_last_id = neko.Lib.load("npostgres","np_last_insert_id",1);
 	static var result_get_error = neko.Lib.load("npostgres","np_result_get_error",1);
+	static var result_get_column_name = neko.Lib.load("npostgres","np_result_get_column_name",2);
 
 }
 
