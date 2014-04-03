@@ -26,15 +26,27 @@
  * Modifications by Max S
  *
  */
+#if haxe3
+package sys.db;
+
+import sys.db.Connection;
+#else
 package neko.db;
 
 import neko.db.Connection;
+#end
+
 
 class PostgresResultSet implements ResultSet {
 
-	public var length(getLength,null) : Int;
-	public var nfields(getNFields,null) : Int;
-	var r : Void;
+#if haxe3
+	public var length(get,null) : Int;
+	public var nfields(get,null) : Int;
+#else
+	public var length(get_length,null) : Int;
+	public var nfields(get_nfields,null) : Int;
+#end
+	var r : Dynamic;
 	var cache : Dynamic;
 
 	public function new( r ) {
@@ -53,11 +65,11 @@ class PostgresResultSet implements ResultSet {
 		return list;
 	}
 
-	function getLength() {
+	function get_length() {
 		return result_get_length( r );
 	}
 
-	function getNFields() {
+	function get_nfields() {
 		return result_get_nfields( r );
 	}
 
@@ -132,7 +144,7 @@ class PostgresResultSet implements ResultSet {
 
 private class PostgresConnection implements Connection {
 
-	private var __c : Void;
+	private var __c : Dynamic;
 	private var id : Int;
 
 	public function new( c ) {
