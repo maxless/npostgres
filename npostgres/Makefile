@@ -5,7 +5,8 @@ PGSQLDIR = /usr/include/postgresql
 CC = gcc
 
 CFLAGS = -w -fPIC -I $(PGSQLDIR) -I $(NEKODIR)
-LDFLAGS = -shared -Wl,-soname,npostgres.ndll -lc -lpq
+#LDFLAGS = -shared -Wl,-soname,npostgres.ndll -lc -lpq
+LDFLAGS = -shared -Wl,-soname,npostgres.ndll,--no-as-needed -lc -lpq
 
 npostgres.ndll: postgres.o
 	$(CC) $(LDFLAGS) -o npostgres.ndll postgres.o
