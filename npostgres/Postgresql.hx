@@ -21,7 +21,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
  * DAMAGE.
- * 
+ *
  * Written by Lee McColl Sylvester
  * Modifications by Max S
  *
@@ -53,7 +53,7 @@ class PostgresResultSet implements ResultSet {
 		this.r = r;
 	}
 
-    
+
 	public function getFieldsNames() : Null<Array<String>> {
 		if (nfields == 0)
 			return null;
@@ -120,7 +120,7 @@ class PostgresResultSet implements ResultSet {
 	public function getFloatResult( n : Int ) : Float {
 		return result_get_float( r, n );
 	}
-	
+
 	public function lastInsertId() : Int {
 		return result_last_id( r );
 	}
@@ -153,7 +153,7 @@ private class PostgresConnection implements Connection {
 
 	public function request( qry : String ) : ResultSet {
 		var r = _request( __c, untyped qry.__s );
-	
+
 		var rs : ResultSet = new PostgresResultSet( r );
 		id = cast( rs, PostgresResultSet ).lastInsertId();
 		return rs;
@@ -206,7 +206,7 @@ private class PostgresConnection implements Connection {
 	}
 /*
 	public function hasFeature( f ) {
-		switch( f ) 
+		switch( f )
 		{
 			case "ForUpdate": return false;
 		}
