@@ -33,6 +33,7 @@
 
 DEFINE_KIND( k_connection );
 DEFINE_KIND( k_result );
+DEFINE_KIND( k_socket );
 
 #undef CONV_FLOAT
 
@@ -468,28 +469,31 @@ static value alloc_result( PGresult *r )
 
 static value np_request( value m, value r )
 {
+    PGconn *conn;
     PGresult *result;
     value v;
 
     val_check_kind( m, k_connection );
     val_check( r, string );
 
-    result = PQexec( PGCONN( m ), val_string( r ) );
+    conn = PGCONN(m);
+    result = PQexec( conn, val_string( r ) );
     if (PQresultStatus(result) != PGRES_COMMAND_OK &&
         PQresultStatus(result) != PGRES_TUPLES_OK)
       {
-        printf( "Query failed: [%s] (Result status:%i)", PQerrorMessage( PGCONN(m) ),
+        printf( "Query failed: [%s] (Result status:%i)",
+          PQerrorMessage(conn),
           PQresultStatus(result) );
 //            PQclear(result);
 
         // connection failed, trying to restore it
         if (PQresultStatus(result) == PGRES_FATAL_ERROR)
           {
-            PQreset( PGCONN( m ) );
+            PQreset(conn);
 
             // trying to resend query
             PQclear(result);
-            result = PQexec( PGCONN( m ), val_string( r ) );
+            result = PQexec( conn, val_string( r ) );
           }
       }
 
@@ -569,11 +573,117 @@ static value np_result_get_error( value m )
 }
 
 
+static value np_set_non_blocking( value m, value n ) {
+    val_check_kind( m, k_connection );
+
+    int ret = PQsetnonblocking( PGCONN( m ), val_int(n) );
+
+    return alloc_int( ret );
+}
+
+
+static value np_is_non_blocking( value m ) {
+    val_check_kind( m, k_connection );
+
+    int ret = PQisnonblocking( PGCONN( m ) );
+
+    return alloc_bool( ret == 1 );
+}
+
+
+static value np_get_socket( value m ) {
+    val_check_kind( m, k_connection );
+
+    int ret = PQsocket( PGCONN( m ) );
+
+    return alloc_abstract(k_socket,(value)(int_val)ret);
+}
+
+
+static value np_flush( value m ) {
+    val_check_kind( m, k_connection );
+
+    int ret = PQflush( PGCONN( m ) );
+
+    return alloc_int( ret );
+}
+
+
+static value np_send_query(value m, value r)
+{
+    int result;
+    value v;
+    PGconn *conn;
+
+    val_check_kind(m, k_connection);
+    val_check(r, string);
+
+    conn = PGCONN(m);
+    result = PQsendQuery(conn, val_string(r));
+    if (result == 0)
+      {
+        printf("Query failed: [%s]", PQerrorMessage(conn));
+
+        // connection failed, trying to restore it
+        if (PQstatus(conn) == CONNECTION_BAD)
+          {
+            PQreset(conn);
+
+            // trying to resend query
+            result = PQsendQuery(conn, val_string(r));
+          }
+      }
+
+    return alloc_int(result);
+}
+
+static value np_get_result( value m )
+{
+    PGconn *conn;
+    PGresult *result;
+    value v;
+
+    val_check_kind( m, k_connection );
+
+    conn = PGCONN(m);
+    result = PQgetResult( conn );
+    if (result == NULL)
+      return val_null;
+
+    if (PQresultStatus(result) != PGRES_COMMAND_OK &&
+        PQresultStatus(result) != PGRES_TUPLES_OK)
+      {
+        printf( "Query failed: [%s] (Result status:%i)",
+          PQerrorMessage(conn),
+          PQresultStatus(result) );
+//            PQclear(result);
+
+        // connection failed, trying to restore it
+        if (PQresultStatus(result) == PGRES_FATAL_ERROR)
+          {
+            PQreset(conn);
+            PQclear(result);
+
+            return val_null;
+          }
+      }
+
+    return alloc_result( result );
+}
+
+
 DEFINE_PRIM(np_connect,1);
 DEFINE_PRIM(np_free_connection,1);
 DEFINE_PRIM(np_free_result,1);
 DEFINE_PRIM(np_last_insert_id,1);
 DEFINE_PRIM(np_request,2);
+
+DEFINE_PRIM(np_set_non_blocking,2);
+DEFINE_PRIM(np_is_non_blocking,1);
+DEFINE_PRIM(np_get_socket,1);
+DEFINE_PRIM(np_flush,1);
+DEFINE_PRIM(np_send_query,2);
+DEFINE_PRIM(np_get_result,1);
 
 DEFINE_PRIM(np_reset_connection,1);
 DEFINE_PRIM(np_result_get_column_name,2);
