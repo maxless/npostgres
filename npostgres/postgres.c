@@ -28,12 +28,12 @@
 #include "libpq-fe.h"
 #include <neko.h>
 
+
 #define PGCONN( o )     ((PGconn*)val_data( o ))
 #define PGRESULT( o )   ((PGresult*)val_data( o ))
 
 DEFINE_KIND( k_connection );
 DEFINE_KIND( k_result );
-DEFINE_KIND( k_socket );
 
 #undef CONV_FLOAT
 
@@ -591,10 +591,14 @@ static value np_is_non_blocking( value m ) {
 }
 
 
-static value np_get_socket( value m ) {
+static value np_get_socket( value m, value sock ) {
+    // hack: get proper k_socket "kind" from dummy socket
+    vkind k_socket = val_kind(sock);
+    int ret;
+
     val_check_kind( m, k_connection );
 
-    int ret = PQsocket( PGCONN( m ) );
+    ret = PQsocket( PGCONN( m ) );
 
     return alloc_abstract(k_socket,(value)(int_val)ret);
 }
@@ -634,8 +638,9 @@ static value np_send_query(value m, value r)
           }
       }
 
-    return alloc_int(result);
+    return alloc_bool(result == 1);
 }
+
 
 static value np_get_result( value m )
 {
@@ -672,6 +677,24 @@ static value np_get_result( value m )
 }
 
 
+static value np_consume_input( value m ) {
+    val_check_kind( m, k_connection );
+
+    int ret = PQconsumeInput( PGCONN(m) );
+
+    return alloc_bool( ret == 1 );
+}
+
+
+static value np_is_busy( value m ) {
+    val_check_kind( m, k_connection );
+
+    int ret = PQisBusy( PGCONN( m ) );
+
+    return alloc_bool( ret == 1 );
+}
+
+
 DEFINE_PRIM(np_connect,1);
 DEFINE_PRIM(np_free_connection,1);
 DEFINE_PRIM(np_free_result,1);
@@ -680,10 +703,12 @@ DEFINE_PRIM(np_request,2);
 
 DEFINE_PRIM(np_set_non_blocking,2);
 DEFINE_PRIM(np_is_non_blocking,1);
-DEFINE_PRIM(np_get_socket,1);
+DEFINE_PRIM(np_get_socket,2);
 DEFINE_PRIM(np_flush,1);
 DEFINE_PRIM(np_send_query,2);
 DEFINE_PRIM(np_get_result,1);
+DEFINE_PRIM(np_consume_input,1);
+DEFINE_PRIM(np_is_busy,1);
 
 DEFINE_PRIM(np_reset_connection,1);
 DEFINE_PRIM(np_result_get_column_name,2);

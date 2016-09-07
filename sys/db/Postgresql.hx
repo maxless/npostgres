@@ -282,14 +282,16 @@ class PostgresConnection implements Connection {
 
     int PQsocket(const PGconn *conn);
 **/
-  public function getSocket(): PostgresSocket
+  public function getSocket(): Socket
     {
-      var __s = _get_socket(__c);
-      if (__s == -1)
-        return null;
-
       if (socket != null)
         return socket;
+
+      // hack: open dummy socket to get proper k_socket "kind" on lower level
+      var tmp = _socket_new(false);
+      var __s = _get_socket(__c, tmp);
+      if (__s == -1)
+        return null;
 
       socket = new PostgresSocket(untyped __s);
 
@@ -311,13 +313,15 @@ class PostgresConnection implements Connection {
     }
 
 /**
+  From the PostgreSQL documentation:
+
     Submits a command to the server without waiting for the result(s). 1 is returned if the command was successfully dispatched and 0 if not (in which case, use PQerrorMessage to get more information about the failure).
 
     int PQsendQuery(PGconn *conn, const char *command);
 
     After successfully calling PQsendQuery, call PQgetResult one or more times to obtain the results. PQsendQuery cannot be called again (on the same connection) until PQgetResult has returned a null pointer, indicating that the command is done.
 **/
-  public function sendQuery( qry : String ) : ResultSet
+  public function sendQuery(qry: String): Bool
     {
 #if neko
         var ret = _send_query( __c, untyped qry.__s );
@@ -329,6 +333,8 @@ class PostgresConnection implements Connection {
     }
 
 /**
+  From the PostgreSQL documentation:
+
     Waits for the next result from a prior PQsendQuery, PQsendQueryParams, PQsendPrepare, or PQsendQueryPrepared call, and returns it. A null pointer is returned when the command is complete and there will be no more results.
 
     PGresult *PQgetResult(PGconn *conn);
@@ -347,16 +353,52 @@ class PostgresConnection implements Connection {
       return res;
     }
 
+/**
+  From the PostgreSQL documentation:
+
+    If input is available from the server, consume it.
+
+    int PQconsumeInput(PGconn *conn);
+
+    PQconsumeInput normally returns 1 indicating "no error", but returns 0 if there was some kind of trouble (in which case PQerrorMessage can be consulted). Note that the result does not say whether any input data was actually collected. After calling PQconsumeInput, the application can check PQisBusy and/or PQnotifies to see if their state has changed.
+
+    PQconsumeInput can be called even if the application is not prepared to deal with a result or notification just yet. The function will read available data and save it in a buffer, thereby causing a select() read-ready indication to go away. The application can thus use PQconsumeInput to clear the select() condition immediately, and then examine the results at leisure.
+**/
+  public function consumeInput(): Bool
+    {
+      return _consume_input(__c);
+    }
+
+
+/**
+  From the PostgreSQL documentation:
+
+    Returns 1 if a command is busy, that is, PQgetResult would block waiting for input. A 0 return indicates that PQgetResult can be called with assurance of not blocking.
+
+    int PQisBusy(PGconn *conn);
+
+    PQisBusy will not itself attempt to read data from the server; therefore PQconsumeInput must be invoked first, or the busy state will never end.
+**/
+  public function isBusy(): Bool
+    {
+      return _is_busy(__c);
+    }
+
+
   static var _connect = neko.Lib.load("npostgres","np_connect",1);
   static var _close = neko.Lib.load("npostgres","np_free_connection",1);
   static var _request = Lib.load("npostgres","np_request",2);
 
   static var _set_non_blocking = neko.Lib.load("npostgres","np_set_non_blocking",2);
   static var _is_non_blocking = neko.Lib.load("npostgres","np_is_non_blocking",1);
-  static var _get_socket = neko.Lib.load("npostgres","np_get_socket",1);
+  static var _get_socket = neko.Lib.load("npostgres","np_get_socket",2);
   static var _flush = neko.Lib.load("npostgres","np_flush",1);
   static var _send_query = neko.Lib.load("npostgres","np_send_query",2);
   static var _get_result = neko.Lib.load("npostgres","np_get_result",1);
+  static var _consume_input = neko.Lib.load("npostgres","np_consume_input",1);
+  static var _is_busy = neko.Lib.load("npostgres","np_is_busy",1);
+
+  static var _socket_new = Lib.load("std","socket_new",1);
 }
 
 
