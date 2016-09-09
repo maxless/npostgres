@@ -695,6 +695,13 @@ static value np_is_busy( value m ) {
 }
 
 
+static value np_error_message( value m ) {
+    val_check_kind( m, k_connection );
+
+    return alloc_string(PQerrorMessage(PGCONN(m)));
+}
+
+
 DEFINE_PRIM(np_connect,1);
 DEFINE_PRIM(np_free_connection,1);
 DEFINE_PRIM(np_free_result,1);
@@ -709,6 +716,7 @@ DEFINE_PRIM(np_send_query,2);
 DEFINE_PRIM(np_get_result,1);
 DEFINE_PRIM(np_consume_input,1);
 DEFINE_PRIM(np_is_busy,1);
+DEFINE_PRIM(np_error_message,1);
 
 DEFINE_PRIM(np_reset_connection,1);
 DEFINE_PRIM(np_result_get_column_name,2);
