@@ -160,8 +160,8 @@ static value np_connect( value params )
     {
         buffer b = alloc_buffer( "Connection to database failed: " );
         buffer_append( b, PQerrorMessage( m ) );
-        bfailure( b );
         PQfinish( m );
+        bfailure( b );
     }
 
     v = alloc_abstract( k_connection, m );
@@ -548,7 +548,7 @@ static value np_result_get_column_name( value m, value c )
 
     return alloc_string( PQfname( result->r, val_int( c ) ) );
 }
-
+/*
 static value np_result_get_column_number( value m, value c )
 {
     result *result;
@@ -560,7 +560,7 @@ static value np_result_get_column_number( value m, value c )
 
     return alloc_string( PQfnumber( result->r, val_string( c ) ) );
 }
-
+*/
 static value np_result_get_error( value m )
 {
     result *result;
@@ -720,7 +720,7 @@ DEFINE_PRIM(np_error_message,1);
 
 DEFINE_PRIM(np_reset_connection,1);
 DEFINE_PRIM(np_result_get_column_name,2);
-DEFINE_PRIM(np_result_get_column_number,2);
+//DEFINE_PRIM(np_result_get_column_number,2);
 DEFINE_PRIM(np_result_get_length,1);
 DEFINE_PRIM(np_result_get_nfields,1);
 DEFINE_PRIM(np_result_next,1);

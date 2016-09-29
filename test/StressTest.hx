@@ -58,7 +58,9 @@ class StressTest
               var c = conns[id];
 //              trace(id + ' consumeInput: ' + c.consumeInput());
 //              trace(id + ' isBusy: ' + c.isBusy());
-              c.consumeInput();
+              while (c.isBusy())
+                c.consumeInput();
+//              trace(id + ' isBusy: ' + c.isBusy());
 
               var res = c.getResult();
 //              trace(res.length);

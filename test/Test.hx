@@ -26,11 +26,6 @@ class Test
 
       // get socket
       var s = database.getSocket();
-/*
-      trace(s);
-      s.output.writeByte(11);
-      s.output.writeString('test');
-*/
 
       trace('flush: ' + database.flush());
       trace('getResult: ' + database.getResult());

@@ -289,7 +289,7 @@ class PostgresConnection implements Connection {
 
       // hack: open dummy socket to get proper k_socket "kind" on lower level
       var tmp = _socket_new(false);
-      var __s = _get_socket(__c, tmp);
+      var __s: Dynamic = _get_socket(__c, tmp);
       if (__s == -1)
         return null;
 
@@ -418,10 +418,20 @@ class PostgresConnection implements Connection {
 
 private class PostgresSocket extends Socket
 {
-  public function new (s: Int)
+  public function new (s: Dynamic)
     {
+#if neko
       __s = untyped s;
       super();
+#elseif cpp
+      // NOTE: this hack is done due to the Socket.hx constructor being
+      // different in Neko and HXCPP. We also set input and output to null
+      // because SocketInput and SocketOutput classes are private.
+      super();
+      __s = untyped s;
+      input = null;
+      output = null;
+#end
     }
 }
 
