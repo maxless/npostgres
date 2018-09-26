@@ -10,7 +10,7 @@ CC = g++
 
 #DEBUG = -g
 DEBUG =
-CFLAGS = -w -fPIC -I $(PGSQLDIR) -I $(NEKODIR) -I $(HXCPPDIR) -I . $(DEBUG)
+CFLAGS = --std=c++0x -w -fPIC -I $(PGSQLDIR) -I $(NEKODIR) -I $(HXCPPDIR) -I . $(DEBUG)
 #LDFLAGS = -shared -Wl,-soname,npostgres.ndll -lc -lpq $(DEBUG)
 LDFLAGS = -shared -Wl,-soname,npostgres.ndll,--no-as-needed -lc -lpq $(DEBUG)
 
